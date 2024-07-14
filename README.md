@@ -1,7 +1,7 @@
 # Simple Golang Project with Gin, Redis
 
-This project demonstrates a basic GoLang web server using the Gin framework and a Redis repository. It includes examples of RESTful endpoints and unit tests.
-
+This project demonstrates a basic GoLang web server using the Gin framework and a Redis repository. It includes examples
+of RESTful endpoints and unit tests.
 
 ## Run the App
 
@@ -9,6 +9,5 @@ This project demonstrates a basic GoLang web server using the Gin framework and 
     ```sh
     docker-compose up
     ```
-
 
 The server will start at `http://localhost:8080`
