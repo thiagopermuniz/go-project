@@ -17,9 +17,9 @@ func (m *MockRedisRepository) GetRepoData(ctx context.Context, key string) (stri
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockRedisRepository) SetRepoData(ctx context.Context, key, value string) (string, error) {
+func (m *MockRedisRepository) PostRepoData(ctx context.Context, key string, value any) error {
 	args := m.Called(ctx, key, value)
-	return args.String(0), args.Error(1)
+	return args.Error(0)
 }
 
 func TestDataService_GetData(t *testing.T) {

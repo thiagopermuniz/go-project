@@ -13,7 +13,7 @@ type RedisClientAPI interface {
 
 type RedisRepositoryInterface interface {
 	GetRepoData(ctx context.Context, key string) (string, error)
-	SetRepoData(ctx context.Context, key, value string) (string, error)
+	PostRepoData(ctx context.Context, key string, value any) error
 }
 
 type RedisRepository struct {
@@ -39,10 +39,10 @@ func (r *RedisRepository) GetRepoData(ctx context.Context, key string) (string, 
 	return val, nil
 }
 
-func (r *RedisRepository) SetRepoData(ctx context.Context, key, value string) (string, error) {
+func (r *RedisRepository) PostRepoData(ctx context.Context, key string, value any) error {
 	res := r.client.Set(ctx, key, value, 30*time.Second)
 	if res.Err() != nil {
-		return "", res.Err()
+		return res.Err()
 	}
-	return res.Val(), nil
+	return nil
 }

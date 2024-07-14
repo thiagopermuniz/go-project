@@ -21,8 +21,8 @@ func main() {
 
 	r := gin.Default()
 	gin.SetMode(gin.ReleaseMode)
-	r.GET("/hello", dataHandler.GetHello)
-	r.GET("/hellow", dataHandler.SetHello)
+	r.GET("/data", dataHandler.GetHandler)
+	r.POST("/data", dataHandler.PostHandler)
 
 	svrErr := r.Run(":8080")
 	if svrErr != nil {

@@ -7,7 +7,7 @@ import (
 
 type DataServiceInterface interface {
 	GetServiceData(ctx context.Context, id string) (string, error)
-	SetServiceData(ctx context.Context, key, value string) (string, error)
+	SetServiceData(ctx context.Context, key string, value any) error
 }
 
 func NewDataService(repo repository.RedisRepositoryInterface) *DataService {
@@ -24,6 +24,6 @@ func (s *DataService) GetServiceData(ctx context.Context, key string) (string, e
 	return s.repository.GetRepoData(ctx, key)
 }
 
-func (s *DataService) SetServiceData(ctx context.Context, key, value string) (string, error) {
-	return s.repository.SetRepoData(ctx, key, value)
+func (s *DataService) SetServiceData(ctx context.Context, key string, value any) error {
+	return s.repository.PostRepoData(ctx, key, value)
 }

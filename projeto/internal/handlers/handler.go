@@ -1,14 +1,16 @@
 package handlers
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
 	"projeto/internal/service"
 )
 
-type DataResponse struct {
-	Data string `json:"data"`
+type Data struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type DataHandler struct {
@@ -21,29 +23,32 @@ func NewDataHandler(svc service.DataServiceInterface) *DataHandler {
 	}
 }
 
-func (h *DataHandler) GetHello(c *gin.Context) {
+func (h *DataHandler) GetHandler(c *gin.Context) {
 	key := c.Query("key")
 	data, err := h.service.GetServiceData(c.Request.Context(), key)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get data"})
-		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
-	response := DataResponse{Data: data}
-	c.JSON(http.StatusOK, response)
+	var jsonData Data
+	_ = json.Unmarshal([]byte(data), &jsonData)
+	c.JSON(http.StatusOK, jsonData)
 }
 
-func (h *DataHandler) SetHello(c *gin.Context) {
-	key := c.Query("key")
-	value := c.Query("value")
-	data, err := h.service.SetServiceData(c.Request.Context(), key, value)
+func (h *DataHandler) PostHandler(c *gin.Context) {
+	body, _ := io.ReadAll(c.Request.Body)
+	data := Data{}
+	_ = json.Unmarshal(body, &data)
+
+	key := data.Key
+	value := data.Value
+	err := h.service.SetServiceData(c.Request.Context(), key, value)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get data"})
-		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	response := DataResponse{Data: data}
+	response := Data{Key: key, Value: value}
 	c.JSON(http.StatusOK, response)
 }

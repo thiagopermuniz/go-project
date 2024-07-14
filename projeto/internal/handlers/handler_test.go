@@ -16,24 +16,33 @@ type MockDataService struct {
 	mock.Mock
 }
 
-func (m *MockDataService) GetData(ctx context.Context, key string) (string, error) {
+func (m *MockDataService) GetServiceData(ctx context.Context, key string) (string, error) {
 	args := m.Called(ctx, key)
 	return args.String(0), args.Error(1)
 }
 
 func TestDataHandler(t *testing.T) {
 	mockService := new(MockDataService)
-	mockService.On("GetData", mock.Anything, "some-key").Return("mocked data", nil)
+	mockService.On("GetServiceData", mock.Anything, "some-key").Return(`{"key":"some-key", "value":"some value"}`, nil)
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
-		data, err := mockService.GetData(ctx, "some-key")
+		dataStr, err := mockService.GetServiceData(ctx, "some-key")
 		if err != nil {
 			http.Error(w, "could not get data", http.StatusInternalServerError)
 			return
 		}
-		response := DataResponse{Data: data}
-		json.NewEncoder(w).Encode(response)
+
+		var data Data
+		err = json.Unmarshal([]byte(dataStr), &data)
+		if err != nil {
+			http.Error(w, "invalid data format", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(data)
 	}
 
 	req, err := http.NewRequest("GET", "/data", nil)
@@ -46,9 +55,14 @@ func TestDataHandler(t *testing.T) {
 	router.HandleFunc("/data", handler)
 	router.ServeHTTP(rr, req)
 
+	var data Data
+	err = json.Unmarshal(rr.Body.Bytes(), &data)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	assert.Equal(t, http.StatusOK, rr.Code, "Expected status OK")
-
-	expected := `{"data":"mocked data"}`
-	assert.JSONEq(t, expected, rr.Body.String(), "Response body differs")
-
+	assert.JSONEq(t, `{"key":"some-key", "value":"some value"}`, rr.Body.String(), "Response body differs")
+	assert.Equal(t, "some-key", data.Key, "Response differs")
+	assert.Equal(t, "some value", data.Value, "Response differs")
 }
