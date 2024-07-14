@@ -33,7 +33,7 @@ func TestDataHandler(t *testing.T) {
 			return
 		}
 
-		var data Data
+		data := map[string]any{}
 		err = json.Unmarshal([]byte(dataStr), &data)
 		if err != nil {
 			http.Error(w, "invalid data format", http.StatusInternalServerError)
@@ -55,7 +55,7 @@ func TestDataHandler(t *testing.T) {
 	router.HandleFunc("/data", handler)
 	router.ServeHTTP(rr, req)
 
-	var data Data
+	data := map[string]any{}
 	err = json.Unmarshal(rr.Body.Bytes(), &data)
 	if err != nil {
 		t.Fatal(err)
@@ -63,6 +63,6 @@ func TestDataHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Code, "Expected status OK")
 	assert.JSONEq(t, `{"key":"some-key", "value":"some value"}`, rr.Body.String(), "Response body differs")
-	assert.Equal(t, "some-key", data.Key, "Response differs")
-	assert.Equal(t, "some value", data.Value, "Response differs")
+	assert.Equal(t, "some-key", data["key"], "Response differs")
+	assert.Equal(t, "some value", data["value"], "Response differs")
 }

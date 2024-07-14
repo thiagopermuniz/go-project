@@ -10,10 +10,10 @@ import (
 
 func setupRouter() *gin.Engine {
 	r := gin.Default()
-	r.POST("/post", func(c *gin.Context) {
+	r.POST("/data", func(c *gin.Context) {
 		c.JSON(http.StatusOK, "post")
 	})
-	r.GET("/get", func(c *gin.Context) {
+	r.GET("/data", func(c *gin.Context) {
 		c.JSON(http.StatusOK, "get")
 	})
 	return r
