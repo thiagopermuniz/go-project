@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gorilla/mux v1.8.1
 	github.com/redis/go-redis/v9 v9.5.4
 	github.com/stretchr/testify v1.9.0
