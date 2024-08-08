@@ -6,18 +6,13 @@ import (
 	"time"
 )
 
-type RedisClientAPI interface {
-	Get(ctx context.Context, key string) *redis.StringCmd
-	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
-}
-
 type RedisRepositoryInterface interface {
 	GetRepoData(ctx context.Context, key string) (string, error)
 	PostRepoData(ctx context.Context, key string, value any) error
 }
 
 type RedisRepository struct {
-	client RedisClientAPI
+	client *redis.Client
 }
 
 func NewRedisRepository(ep string) (*RedisRepository, error) {
