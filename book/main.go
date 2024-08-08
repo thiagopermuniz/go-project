@@ -1,72 +1,101 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
-	"math"
 )
 
-type ImpossiblePrintableInt interface {
-	~int
-	String() string
-}
-type ImpossibleStruct[T ImpossiblePrintableInt] struct {
-	val T
-}
-type MyInt int
-
-func (mi MyInt) String() string {
-	return fmt.Sprint(mi)
-}
-
 func main() {
-	s := ImpossibleStruct[int]{10}
-	s2 := ImpossibleStruct[MyInt]{10}
+	t1 := NewTree(cmp.Compare[int])
+	t1.Add(10)
+	t1.Add(30)
+	t1.Add(15)
+	fmt.Println(t1.Contains(15))
+	fmt.Println(t1.Contains(40))
 
-	fmt.Println(s, s2)
-}
+	t2 := NewTree(OrderPeople)
+	t2.Add(Person{Name: "Abrao", Age: 20})
+	t2.Add(Person{Name: "Abrao", Age: 10})
+	t2.Add(Person{Name: "Thiago", Age: 20})
+	fmt.Println(t2.Contains(Person{Name: "Abrao", Age: 10}))
+	fmt.Println(t2.Contains(Person{Name: "Abrao", Age: 11}))
 
-type Point2D struct {
-	X, Y int
-}
+	t3 := NewTree(Person.Order)
+	t3.Add(Person{Name: "Abrao", Age: 20})
+	t3.Add(Person{Name: "Abrao", Age: 10})
+	t3.Add(Person{Name: "Thiago", Age: 20})
+	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 10}))
+	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 11}))
 
-func (p2 Point2D) String() string {
-	return fmt.Sprintf("{%d,%d}", p2.X, p2.Y)
-}
-func (p2 Point2D) Diff(from Point2D) float64 {
-	x := p2.X - from.X
-	y := p2.Y - from.Y
-	return math.Sqrt(float64(x*x) + float64(y*y))
-}
-
-type Point3D struct {
-	X, Y, Z int
-}
-
-func (p3 Point3D) String() string {
-	return fmt.Sprintf("{%d,%d,%d}", p3.X, p3.Y, p3.Z)
-}
-func (p3 Point3D) Diff(from Point3D) float64 {
-	x := p3.X - from.X
-	y := p3.Y - from.Y
-	z := p3.Z - from.Z
-	return math.Sqrt(float64(x*x) + float64(y*y) + float64(z*z))
 }
 
-type Pair[T fmt.Stringer] struct {
-	Val1 T
-	Val2 T
-}
-
-type Differ[T any] interface {
-	fmt.Stringer
-	Diff(T) float64
-}
-
-func FindCloser[T Differ[T]](pair1, pair2 Pair[T]) Pair[T] {
-	d1 := pair1.Val1.Diff(pair1.Val2)
-	d2 := pair2.Val1.Diff(pair2.Val2)
-	if d1 < d2 {
-		return pair1
+func (p Person) Order(other Person) int {
+	out := cmp.Compare(p.Name, other.Name)
+	if out == 0 {
+		out = cmp.Compare(p.Age, other.Age)
 	}
-	return pair2
+	return out
+}
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func OrderPeople(p1, p2 Person) int {
+	out := cmp.Compare(p1.Name, p2.Name)
+	if out == 0 {
+		out = cmp.Compare(p1.Age, p2.Age)
+	}
+	return out
+}
+
+type OrderableFunc[T any] func(t1, t2 T) int
+
+type Tree[T any] struct {
+	f    OrderableFunc[T]
+	root *Node[T]
+}
+type Node[T any] struct {
+	val         T
+	left, right *Node[T]
+}
+
+func NewTree[T any](f OrderableFunc[T]) *Tree[T] {
+	return &Tree[T]{
+		f: f,
+	}
+}
+
+func (t *Tree[T]) Add(v T) {
+	t.root = t.root.Add(t.f, v)
+}
+
+func (t *Tree[T]) Contains(v T) bool {
+	return t.root.Contains(t.f, v)
+}
+
+func (n *Node[T]) Add(f OrderableFunc[T], v T) *Node[T] {
+	if n == nil {
+		return &Node[T]{val: v}
+	}
+	switch r := f(v, n.val); {
+	case r <= -1:
+		n.left = n.left.Add(f, v)
+	case r >= 1:
+		n.right = n.right.Add(f, v)
+	}
+	return n
+}
+func (n *Node[T]) Contains(f OrderableFunc[T], v T) bool {
+	if n == nil {
+		return false
+	}
+	switch r := f(v, n.val); {
+	case r <= -1:
+		return n.left.Contains(f, v)
+	case r >= 1:
+		return n.right.Contains(f, v)
+	}
+	return true
 }
