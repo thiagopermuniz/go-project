@@ -8,7 +8,6 @@ import (
 func main() {
 	list := &Node[int]{val: 1}
 	list.Add(2)
-
 	list.Add(3)
 	list.Add(7)
 	list.Insert(5, 2)
@@ -38,7 +37,7 @@ func (n *Node[T]) Add(val T) {
 
 func (n *Node[T]) Insert(val T, idx int) {
 	if idx == 0 {
-		nn := &Node[T]{val: val, next: n}
+		nn := &Node[T]{val: val, next: n.next}
 		*n = *nn
 		return
 	}
@@ -51,14 +50,14 @@ func (n *Node[T]) Insert(val T, idx int) {
 		}
 		curr = curr.next
 	}
+
 	nn := &Node[T]{val: val, next: curr.next}
 	curr.next = nn
-
 }
 
 func (n *Node[T]) Index(val T) int {
 	curr := n
-	idx := 0
+	var idx int
 	for curr != nil {
 		if curr.val == val {
 			return idx
@@ -70,6 +69,13 @@ func (n *Node[T]) Index(val T) int {
 	return -1
 }
 
+func (n *Node[T]) String() {
+	curr := n
+	for curr != nil {
+		fmt.Println(curr.val)
+		curr = curr.next
+	}
+}
 func (p Person) Order(other Person) int {
 	out := cmp.Compare(p.Name, other.Name)
 	if out == 0 {
