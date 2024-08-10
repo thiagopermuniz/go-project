@@ -27,6 +27,56 @@ func main() {
 	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 10}))
 	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 11}))
 
+	list := &Node[int]{val: 1}
+	list.Add(2)
+	list.Add(3)
+	list.Add(7)
+	list.Insert(5, 2)
+	fmt.Printf("idx: %d \n", list.Index(2))
+
+	current := list
+	for current != nil {
+		fmt.Println(current.val)
+		current = current.next
+	}
+}
+
+type Node[T comparable] struct {
+	val  T
+	next *Node[T]
+}
+
+func (n *Node[T]) Add(val T) {
+	curr := n
+	for curr.next != nil {
+		curr = curr.next
+	}
+	curr.next = &Node[T]{val: val}
+}
+
+func (n *Node[T]) Insert(val T, idx int) {
+	curr := n
+	for i := 0; i < idx; i++ {
+		curr = curr.next
+	}
+	curr.val = val
+
+}
+
+func (n *Node[T]) Index(val T) int {
+	curr := n
+	idx := 0
+	for curr.next != nil {
+		if curr.val == val {
+			return idx
+		}
+		curr = curr.next
+		idx++
+	}
+	if curr.val == val {
+		return idx
+	}
+	return -1
 }
 
 func (p Person) Order(other Person) int {
@@ -54,11 +104,11 @@ type OrderableFunc[T any] func(t1, t2 T) int
 
 type Tree[T any] struct {
 	f    OrderableFunc[T]
-	root *Node[T]
+	root *TreeNode[T]
 }
-type Node[T any] struct {
+type TreeNode[T any] struct {
 	val         T
-	left, right *Node[T]
+	left, right *TreeNode[T]
 }
 
 func NewTree[T any](f OrderableFunc[T]) *Tree[T] {
@@ -75,9 +125,9 @@ func (t *Tree[T]) Contains(v T) bool {
 	return t.root.Contains(t.f, v)
 }
 
-func (n *Node[T]) Add(f OrderableFunc[T], v T) *Node[T] {
+func (n *TreeNode[T]) Add(f OrderableFunc[T], v T) *TreeNode[T] {
 	if n == nil {
-		return &Node[T]{val: v}
+		return &TreeNode[T]{val: v}
 	}
 	switch r := f(v, n.val); {
 	case r <= -1:
@@ -87,7 +137,7 @@ func (n *Node[T]) Add(f OrderableFunc[T], v T) *Node[T] {
 	}
 	return n
 }
-func (n *Node[T]) Contains(f OrderableFunc[T], v T) bool {
+func (n *TreeNode[T]) Contains(f OrderableFunc[T], v T) bool {
 	if n == nil {
 		return false
 	}
