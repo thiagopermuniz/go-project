@@ -6,39 +6,21 @@ import (
 )
 
 func main() {
-	t1 := NewTree(cmp.Compare[int])
-	t1.Add(10)
-	t1.Add(30)
-	t1.Add(15)
-	fmt.Println(t1.Contains(15))
-	fmt.Println(t1.Contains(40))
-
-	t2 := NewTree(OrderPeople)
-	t2.Add(Person{Name: "Abrao", Age: 20})
-	t2.Add(Person{Name: "Abrao", Age: 10})
-	t2.Add(Person{Name: "Thiago", Age: 20})
-	fmt.Println(t2.Contains(Person{Name: "Abrao", Age: 10}))
-	fmt.Println(t2.Contains(Person{Name: "Abrao", Age: 11}))
-
-	t3 := NewTree(Person.Order)
-	t3.Add(Person{Name: "Abrao", Age: 20})
-	t3.Add(Person{Name: "Abrao", Age: 10})
-	t3.Add(Person{Name: "Thiago", Age: 20})
-	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 10}))
-	fmt.Println(t3.Contains(Person{Name: "Abrao", Age: 11}))
-
 	list := &Node[int]{val: 1}
 	list.Add(2)
+
 	list.Add(3)
 	list.Add(7)
 	list.Insert(5, 2)
-	fmt.Printf("idx: %d \n", list.Index(2))
-
+	list.Insert(4, 2)
+	list.Insert(2, 20)
 	current := list
 	for current != nil {
 		fmt.Println(current.val)
 		current = current.next
 	}
+
+	fmt.Println("i ", list.Index(7))
 }
 
 type Node[T comparable] struct {
@@ -55,27 +37,36 @@ func (n *Node[T]) Add(val T) {
 }
 
 func (n *Node[T]) Insert(val T, idx int) {
+	if idx == 0 {
+		nn := &Node[T]{val: val, next: n}
+		*n = *nn
+		return
+	}
+
 	curr := n
-	for i := 0; i < idx; i++ {
+	for range idx - 1 {
+		if curr.next == nil {
+			fmt.Printf("index %d out of range\n", idx)
+			return
+		}
 		curr = curr.next
 	}
-	curr.val = val
+	nn := &Node[T]{val: val, next: curr.next}
+	curr.next = nn
 
 }
 
 func (n *Node[T]) Index(val T) int {
 	curr := n
 	idx := 0
-	for curr.next != nil {
+	for curr != nil {
 		if curr.val == val {
 			return idx
 		}
 		curr = curr.next
 		idx++
 	}
-	if curr.val == val {
-		return idx
-	}
+
 	return -1
 }
 
