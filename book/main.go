@@ -1,148 +1,126 @@
 package main
 
 import (
-	"cmp"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 )
 
+var InvalidIDErr = errors.New("invalid ID")
+
+type ValidationError struct {
+	Messages []error
+}
+
+func (e ValidationError) Error() string {
+	var errorMsg strings.Builder
+	errorMsg.WriteString("validation errors: ")
+	for _, m := range e.Messages {
+		errorMsg.WriteString(m.Error() + "; ")
+	}
+	return strings.TrimSpace(errorMsg.String())
+}
+
+func ValidateEmployee(e Employee) error {
+	var errs []error
+	if !validID.MatchString(e.ID) {
+		errs = append(errs, InvalidIDErr)
+	}
+
+	if len(e.ID) == 0 {
+		errs = append(errs, errors.New("invalid ID"))
+	}
+	if len(e.FirstName) == 0 {
+		errs = append(errs, errors.New("invalid FirstName"))
+	}
+	if len(e.LastName) == 0 {
+		errs = append(errs, errors.New("invalid LastName"))
+	}
+	if len(e.Title) == 0 {
+		errs = append(errs, errors.New("invalid Title"))
+	}
+
+	if len(errs) > 0 {
+		return ValidationError{errs}
+	}
+	return nil
+}
+
 func main() {
-	list := &Node[int]{val: 1}
-	list.Add(2)
-	list.Add(3)
-	list.Add(7)
-	list.Insert(5, 2)
-	list.Insert(4, 2)
-	list.Insert(2, 20)
-	current := list
-	for current != nil {
-		fmt.Println(current.val)
-		current = current.next
-	}
-
-	fmt.Println("i ", list.Index(7))
-}
-
-type Node[T comparable] struct {
-	val  T
-	next *Node[T]
-}
-
-func (n *Node[T]) Add(val T) {
-	curr := n
-	for curr.next != nil {
-		curr = curr.next
-	}
-	curr.next = &Node[T]{val: val}
-}
-
-func (n *Node[T]) Insert(val T, idx int) {
-	if idx == 0 {
-		nn := &Node[T]{val: val, next: n.next}
-		*n = *nn
-		return
-	}
-
-	curr := n
-	for range idx - 1 {
-		if curr.next == nil {
-			fmt.Printf("index %d out of range\n", idx)
-			return
+	d := json.NewDecoder(strings.NewReader(data))
+	count := 0
+	for d.More() {
+		count++
+		var emp Employee
+		err := d.Decode(&emp)
+		if err != nil {
+			fmt.Printf("record %d: %v\n", count, err)
+			continue
 		}
-		curr = curr.next
-	}
 
-	nn := &Node[T]{val: val, next: curr.next}
-	curr.next = nn
-}
-
-func (n *Node[T]) Index(val T) int {
-	curr := n
-	var idx int
-	for curr != nil {
-		if curr.val == val {
-			return idx
+		err = ValidateEmployee(emp)
+		if err != nil {
+			fmt.Printf("record %d: %s\n", count, err.Error())
+			continue
 		}
-		curr = curr.next
-		idx++
-	}
-
-	return -1
-}
-
-func (n *Node[T]) String() {
-	curr := n
-	for curr != nil {
-		fmt.Println(curr.val)
-		curr = curr.next
-	}
-}
-func (p Person) Order(other Person) int {
-	out := cmp.Compare(p.Name, other.Name)
-	if out == 0 {
-		out = cmp.Compare(p.Age, other.Age)
-	}
-	return out
-}
-
-type Person struct {
-	Name string
-	Age  int
-}
-
-func OrderPeople(p1, p2 Person) int {
-	out := cmp.Compare(p1.Name, p2.Name)
-	if out == 0 {
-		out = cmp.Compare(p1.Age, p2.Age)
-	}
-	return out
-}
-
-type OrderableFunc[T any] func(t1, t2 T) int
-
-type Tree[T any] struct {
-	f    OrderableFunc[T]
-	root *TreeNode[T]
-}
-type TreeNode[T any] struct {
-	val         T
-	left, right *TreeNode[T]
-}
-
-func NewTree[T any](f OrderableFunc[T]) *Tree[T] {
-	return &Tree[T]{
-		f: f,
+		fmt.Printf("record %d: %+v\n", count, emp)
 	}
 }
 
-func (t *Tree[T]) Add(v T) {
-	t.root = t.root.Add(t.f, v)
+const data = `
+{
+	"id": "ABCD-123",
+	"first_name": "Bob",
+	"last_name": "Bobson",
+	"title": "Senior Manager"
+}
+{
+	"id": "XYZ-123",
+	"first_name": "Mary",
+	"last_name": "Maryson",
+	"title": "Vice President"
+}
+{
+	"id": "BOTX-263",
+	"first_name": "",
+	"last_name": "Garciason",
+	"title": "Manager"
+}
+{
+	"id": "HLXO-829",
+	"first_name": "Pierre",
+	"last_name": "",
+	"title": "Intern"
+}
+{
+	"id": "MOXW-821",
+	"first_name": "",
+	"last_name": "Watanabe",
+	"title": ""
+}
+{
+	"id": "",
+	"first_name": "Shelly",
+	"last_name": "Shellson",
+	"title": "CEO"
+}
+{
+	"id": "YDOD-324",
+	"first_name": "",
+	"last_name": "",
+	"title": ""
+}
+`
+
+type Employee struct {
+	ID        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Title     string `json:"title"`
 }
 
-func (t *Tree[T]) Contains(v T) bool {
-	return t.root.Contains(t.f, v)
-}
-
-func (n *TreeNode[T]) Add(f OrderableFunc[T], v T) *TreeNode[T] {
-	if n == nil {
-		return &TreeNode[T]{val: v}
-	}
-	switch r := f(v, n.val); {
-	case r <= -1:
-		n.left = n.left.Add(f, v)
-	case r >= 1:
-		n.right = n.right.Add(f, v)
-	}
-	return n
-}
-func (n *TreeNode[T]) Contains(f OrderableFunc[T], v T) bool {
-	if n == nil {
-		return false
-	}
-	switch r := f(v, n.val); {
-	case r <= -1:
-		return n.left.Contains(f, v)
-	case r >= 1:
-		return n.right.Contains(f, v)
-	}
-	return true
-}
+var (
+	validID = regexp.MustCompile(`\w{4}-\d{3}`)
+)
